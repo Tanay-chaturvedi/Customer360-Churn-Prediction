@@ -38,13 +38,13 @@ Customer churn is one of the most critical threats to profitability in subscript
 | :--- | :--- | :--- |
 | **Language & Runtime** | `Python 3.13+` | Core execution environment |
 | **Relational Database** | `MySQL 8.0+` | Customer transaction & attribute repository |
-| **Database Connector** | `SQLAlchemy 2.0` / `PyMySQL` | High-efficiency database connection pooling and query execution |
+| **Database Connector** | `SQLAlchemy 2.1.6` / `PyMySQL 1.2.3` | High-efficiency database connection pooling and query execution |
 | **Data Manipulation** | `pandas`, `numpy` | Vectorized feature transformations and tabular operations |
 | **Machine Learning** | `scikit-learn`, `XGBoost`, `imbalanced-learn` | Preprocessing pipelines, tree boosting, and class balancing |
 | **Model Serialization** | `joblib` | Production artifact persistence (`.joblib`) |
 | **MLOps & Tracking** | `MLflow 3.17.2` | Experiment runs, metric comparison, plot artifact storage |
 | **API Microservice** | `FastAPI`, `Uvicorn`, `Pydantic v2` | High-performance REST endpoints with strict typing |
-| **Executive Frontend** | `Streamlit 1.42`, `Plotly Express` | Interactive business dashboard and scenario simulation |
+| **Executive Frontend** | `Streamlit 1.66.1`, `Plotly Express` | Interactive business dashboard and scenario simulation |
 | **Quality Assurance** | `pytest`, `httpx` | Unit and integration testing across API and MLflow modules |
 
 ---
@@ -113,9 +113,9 @@ Customer churn is one of the most critical threats to profitability in subscript
 
 ---
 
-## 5. Dataset Description
+## 5. Dataset Description & Availability
 
-Customer360 is built upon the industry-standard **IBM Telco Customer Churn** dataset (`data/raw/customer_churn.csv`). It consists of **7,043 unique customer accounts** observed across **21 distinct attributes**:
+Customer360 is designed around the widely analyzed **IBM Telco Customer Churn** dataset, consisting of **7,043 unique customer accounts** observed across **21 distinct attributes**:
 
 - **Target Variable**: `Churn` (`Yes` / `No`) indicating whether the customer left within the last month.
 - **Class Distribution**: 5,174 active customers (**73.46%**) vs. 1,869 churned customers (**26.54%**), representing a realistic ~1:3 class imbalance.
@@ -124,8 +124,12 @@ Customer360 is built upon the industry-standard **IBM Telco Customer Churn** dat
   - **Account & Financial Tenure**: `tenure` (0–72 months), `Contract` (Month-to-month, One year, Two year), `PaperlessBilling` (Yes/No), `PaymentMethod` (Electronic check, Mailed check, Bank transfer, Credit card), `MonthlyCharges` (USD), `TotalCharges` (USD).
   - **Subscribed Services**: `PhoneService`, `MultipleLines`, `InternetService` (DSL, Fiber optic, No), `OnlineSecurity`, `OnlineBackup`, `DeviceProtection`, `TechSupport`, `StreamingTV`, `StreamingMovies`.
 
-> [!NOTE]
-> **Dataset Source & Attribution**: This dataset was originally published by IBM as sample customer records for business analytics and retention demonstration, and has become a standard benchmark in churn prediction literature. It represents fictional/sample customer profiles without real individual PII. The local copy is provided at `data/raw/customer_churn.csv` solely for project demonstration, pipeline execution, and local reproducibility. Users redistributing or utilizing this dataset in production or commercial environments should consult IBM's original sample data terms.
+> [!IMPORTANT]
+> **Dataset Availability & License Terms Notice**:
+> The raw dataset is **not included** in this GitHub repository because redistribution rights have not been verified. Users must obtain the IBM Telco Customer Churn dataset separately from its original source (e.g., IBM sample data community repositories) and review all applicable license and usage terms prior to use. Neither redistribution nor commercial use is authorized or warranted by this repository.
+> 
+> To run the platform locally, download the original CSV and place it at:
+> `data/raw/customer_churn.csv`
 
 ---
 
@@ -188,10 +192,10 @@ The table `customers` stores clean, typed subscriber records with `customerID VA
 To maintain rigorous evaluation standards: preprocessing parameters are fit solely on training data, candidate model tuning and selection are conducted strictly on the validation set, and a held-out test split provides the final evaluation benchmark (with prior exploratory test-set exposure documented in Section 11):
 
 ### 1. Three-Way Stratified Partition
-The 7,043 records are partitioned into three immutable subsets using stratified sampling on `Churn`:
-- **Training Set (70%, 4,929 rows)**: Exclusively utilized to fit preprocessing parameters and train model estimators.
-- **Validation Set (15%, 1,057 rows)**: Exclusively utilized for candidate model benchmarking, hyperparameter comparison, and champion selection.
-- **Held-Out Test Set (15%, 1,057 rows)**: Preserved untouched during exploration; evaluated strictly once on the final selected Champion model.
+The 7,043 records are partitioned into three subsets using stratified sampling on `Churn`:
+- **Training Set (70%, 4,929 rows)**: Exclusively utilized to fit preprocessing transformations (`StandardScaler`, `OneHotEncoder`, median imputer) and train model estimators.
+- **Validation Set (15%, 1,057 rows)**: Exclusively utilized for candidate model benchmarking, hyperparameter comparison, balancing strategy selection, and champion model selection.
+- **Held-Out Test Set (15%, 1,057 rows)**: Serves as the benchmark split for evaluating the selected Champion model. As transparently disclosed in Section 11, earlier development iterations involved exploratory evaluation of multiple candidate models on this test set before the evaluation workflow was corrected; therefore, final test metrics must be interpreted with this limitation in mind rather than as an entirely untouched evaluation.
 
 ### 2. Training-Fitted Preprocessing Pipeline ([`src/ml/preprocessor.py`](file:///c:/Users/USER/OneDrive/Desktop/Customer%20360/src/ml/preprocessor.py))
 - **`DataCleaner` Transformer**: Converts `TotalCharges` to float, handles whitespace values, and imputes missing numeric records using the median calculated **strictly from the training split**.
@@ -238,7 +242,8 @@ Following selection on the validation split, the Champion `XGBoost` model was ev
 | **F1-Score** | 0.6250 | **0.6383** | +0.0133 | Strong harmonic balance between intervention coverage and alert purity |
 | **Accuracy** | 75.59% | **75.88%** | +0.29% | Stable baseline classification accuracy on imbalanced data |
 
-> **Production Generalization Confirmation**: Because the final test metrics match or slightly exceed the validation baseline across all evaluation dimensions, there is **zero evidence of overfitting**.
+> [!NOTE]
+> **Generalization Assessment**: While the final test metrics closely mirror and slightly exceed the validation baseline across all dimensions (e.g., Test PR-AUC 0.6651 vs. Validation PR-AUC 0.6435; Test Recall 80.36% vs. Validation Recall 76.51%), these results should not be treated as fully independent confirmation of generalization due to the exploratory evaluation conducted on the test set during earlier development iterations (see Section 11).
 
 ---
 
@@ -447,8 +452,11 @@ The platform classifies subscribers into three actionable operational tiers ([`s
 Open Windows PowerShell:
 
 ```powershell
-# Navigate to desired directory
-cd "C:\Users\USER\OneDrive\Desktop\Customer 360"
+# Clone the repository from GitHub
+git clone https://github.com/Tanay-chaturvedi/Customer360-Churn-Prediction.git
+
+# Navigate into the cloned project directory
+cd Customer360-Churn-Prediction
 
 # Create a local virtual environment
 python -m venv venv
@@ -499,7 +507,7 @@ Ensure MySQL is running, then create the database tables:
 ```
 
 ### 2. Ingest the Telco Customer Dataset
-Load the raw CSV data into MySQL:
+Ensure you have obtained the raw dataset and placed it at `data/raw/customer_churn.csv` (see Section 5). Then load the CSV data into MySQL:
 
 ```powershell
 .\venv\Scripts\python.exe src/database/load_data.py
@@ -581,8 +589,9 @@ tests/test_tracking.py::test_generate_run_plots PASSED
 
 ```
 Customer 360/
-├── .env                              # Local database and API environment variables
-├── .gitignore                        # Git exclusion rules (.env, venv, pycache, etc.)
+├── .env                              # Local database and API environment variables (git-ignored)
+├── .env.example                      # Template environment variable configuration with safe placeholders
+├── .gitignore                        # Git exclusion rules (.env, venv, pycache, mlflow, etc.)
 ├── README.md                         # Root repository documentation and architecture guide
 ├── requirements.txt                  # Locked Python package dependencies
 │
@@ -591,7 +600,7 @@ Customer 360/
 │
 ├── data/
 │   └── raw/
-│       └── customer_churn.csv        # IBM Telco Customer Churn dataset (7,043 rows)
+│       └── customer_churn.csv        # Not included in repo - user must download separately (see Section 5)
 │
 ├── docs/
 │   └── database_design.md            # Schema architecture and relational dictionary
