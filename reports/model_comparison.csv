@@ -1,0 +1,8 @@
+Split,Status,Model,Method,Accuracy,Precision,Recall,F1-Score,ROC-AUC,PR-AUC
+Validation (Selection),Selected Champion,XGBoost,Class_Weights,0.7559,0.5283,0.7651,0.625,0.8383,0.6435
+Validation (Selection),Candidate,XGBoost_SMOTE,SMOTE_Oversampling,0.7938,0.6026,0.6584,0.6293,0.8392,0.6373
+Validation (Selection),Candidate,Random_Forest,Class_Weights,0.7588,0.5325,0.758,0.6256,0.8351,0.636
+Validation (Selection),Candidate,Logistic_Regression_SMOTE,SMOTE_Oversampling,0.7521,0.5232,0.7616,0.6203,0.829,0.628
+Validation (Selection),Candidate,Logistic_Regression,Class_Weights,0.7455,0.5144,0.7651,0.6152,0.8286,0.6246
+Validation (Selection),Candidate,Random_Forest_SMOTE,SMOTE_Oversampling,0.7843,0.5801,0.6833,0.6275,0.8322,0.6188
+Test (Final Generalization),Final Test Benchmark,XGBoost (Champion),Class_Weights,0.7588,0.5294,0.8036,0.6383,0.8525,0.6651
